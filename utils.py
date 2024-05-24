@@ -35,6 +35,7 @@ def block_view(A, block=(3, 3)):
     return ast(A, shape=shape, strides=strides)
 
 def image_concat(images):
+    # images contain list of PIL images
     width, height = images[0].size
     target_shape = (3 * width, height)
     background = Image.new(mode="RGB", size=target_shape, color='black')
@@ -51,9 +52,6 @@ def all_image_concat(images):
         location = (0,(i) * height)
         background.paste(img, location)
     return background
-
-
-
 
 def img_show(inputs,outputs,mask,config):
     inputs = torch.squeeze(inputs)
@@ -85,3 +83,15 @@ def img_show(inputs,outputs,mask,config):
         images = [random,random_pred,random_mask_p]
 
     return image_concat(images)
+
+def image_save(inputs, save_path):
+    """ save image as png """
+    inputs = torch.squeeze(inputs)
+    image_p = transforms.ToPILImage()(inputs.detach().cpu()).convert('RGB')
+    image_p.save(save_path, format='PNG')
+
+def scale_pixels_01_to_neg11(inputs):
+    return inputs*2 - 1
+    
+def scale_pixels_neg11_to_01(inputs):
+    return (inputs+1) / 2

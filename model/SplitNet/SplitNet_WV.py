@@ -33,9 +33,13 @@ class SplitNet_WV(object):
         r_imrefine = r_pred[0] * r_mask + random * (1 - r_mask)
         return random,r_imrefine,r_mask
 
-    def DWV(self,img_source,logo_path,seed):
+    def DWV(self,img_source,logo_path,seed, attack_type = 'Original'):
         delta1 = torch.zeros_like(img_source).cuda()
         delta1.requires_grad = True
+        if attack_type == 'MIFGSM':
+            decay = 1.0
+            momentum = torch.zeros_like(img_source).cuda()    
+
         for i in range(self.args.attack_iter):
             mid_output, mid_mask, _ = self.model(img_source + delta1)
             mid_refine = mid_output[0] * mid_mask + img_source * (1 - mid_mask)
@@ -43,6 +47,12 @@ class SplitNet_WV(object):
             loss.backward()
             grad = delta1.grad.detach()
             d = delta1
+
+            if attack_type == 'MIFGSM':
+                grad_norm = grad / torch.norm(torch.abs(grad), p=1, dim=(1, 2, 3), keepdim=True)
+                grad = grad_norm + momentum * decay
+                momentum = grad
+
             d = clamp(d + self.step_alpha * torch.sign(grad), -self.epsilon, self.epsilon)
             delta1.data = d
             delta1.grad.zero_()
@@ -53,12 +63,15 @@ class SplitNet_WV(object):
         adv1_imrefine = adv1_pred[0] * adv1_mask + adv1 * (1 - adv1_mask)
         return adv1,adv1_imrefine,adv1_mask
 
-    def IWV(self,img_source,logo_path,seed):
+    def IWV(self,img_source,logo_path,seed, attack_type='Original'):
         mask_black = torch.zeros((1, 256, 256)).cuda()
         mask_black = torch.unsqueeze(mask_black, 0)
-
         delta2 = torch.zeros_like(img_source).cuda()
         delta2.requires_grad = True
+        if attack_type == 'MIFGSM':
+            decay = 1.0
+            momentum = torch.zeros_like(img_source).cuda()
+
         for i in range(self.args.attack_iter):
             mid_output, mid_mask, _ = self.model(img_source + delta2)
             mid_refine = mid_output[0] * mid_mask + img_source * (1 - mid_mask)
@@ -66,6 +79,12 @@ class SplitNet_WV(object):
             loss.backward()
             grad = -delta2.grad.detach()
             d = delta2
+
+            if attack_type == 'MIFGSM':
+                grad_norm = grad / torch.norm(torch.abs(grad), p=1, dim=(1, 2, 3), keepdim=True)
+                grad = grad_norm + momentum * decay
+                momentum = grad
+
             d = clamp(d + self.step_alpha * torch.sign(grad), -self.epsilon, self.epsilon)
             delta2.data = d
             delta2.grad.zero_()

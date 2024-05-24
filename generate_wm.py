@@ -10,15 +10,10 @@ import random
 
 def solve_mask(img, img_target):
     img1 = np.asarray(img.permute(1, 2, 0).cpu())
-    # print(img1)
     img2 = np.asarray(img_target.permute(1, 2, 0).cpu())
-    # print(img2)
     img3 = abs(img1 - img2)
-    # print(img3)
     mask = img3.sum(2) > (15.0 / 255.0)
     mask = mask.astype(int)
-    # print('oooooooooooooooooooooo')
-    # print(mask)
     return mask
 
 
@@ -64,7 +59,7 @@ def generate_watermark(img,root_logo):
     return img
 
 def generate_watermark_ori(img,root_logo,seeds):
-
+    # return img[0], img[0]
     random.seed(seeds)
     img = img[0].detach().cpu().numpy()
     img = torch.tensor(img).cuda()
@@ -73,7 +68,6 @@ def generate_watermark_ori(img,root_logo,seeds):
 
     rotate_angle = random.randint(0, 360)
     logo_rotate = logo.rotate(rotate_angle, expand=True)
-    logo_height, logo_width = logo_rotate.size
     logo_height = random.randint(50, 70)
     logo_width = random.randint(50, 70)
     logo_resize = logo_rotate.resize((logo_height, logo_width))
@@ -81,11 +75,16 @@ def generate_watermark_ori(img,root_logo,seeds):
     transform_totensor = transforms.Compose([transforms.ToTensor()])
     logo = transform_totensor(logo_resize).cuda()
 
+    # Determines the opacity of the logo, between 0.4 and 0.7.
     alpha = random.random() * 0.3 + 0.4
+    # The position where the logo will be placed on the image is chosen randomly 
+    # such that the entire logo fits within the image boundaries.
     start_height = random.randint(0, 256 - logo_height)
     start_width = random.randint(0, 256 - logo_width)
 
     img_target = img.clone()
+    # The slice 3:4 includes only the index 3, but crucially, it maintains the dimensionality of the output. 
+    # This means the result is still a three-dimensional array with one channel.
     img[:, start_width:start_width + logo_width, start_height:start_height + logo_height] = \
         img[:,start_width:start_width + logo_width, start_height:start_height + logo_height] * (1.0 - alpha * logo[3:4,:,:]) + logo[:3,:,:] * alpha * logo[3:4,:,:]
 
