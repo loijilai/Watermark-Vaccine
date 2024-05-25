@@ -78,19 +78,17 @@ def main():
 
         # Disrupting Watermark Vaccine
         if args.model == 'Ensemble':
-            adv1 = optimizer.DWV(img_source,logo_path,seed,attack_type='MIFGSM')
+            adv1 = optimizer.DWV(img_source,logo_path,seed,attack_type=args.attack_type)
         else:
-            adv1, adv1_pred, adv1_mask = optimizer.DWV(img_source,logo_path,seed,attack_type='MIFGSM')
-        image_save(adv1, os.path.join(args.save_path, f'{args.model}', 'dwv', f'{t}-dwv.png'))
+            adv1, adv1_pred, adv1_mask = optimizer.DWV(img_source,logo_path,seed,attack_type=args.attack_type)
+        image_save(adv1, os.path.join(args.save_path, f'{args.model}', 'dwv', f'{args.attack_type}', f'{t}-dwv.png'))
         
         # Inerasable Wateramark Vaccine
         if args.model == 'Ensemble':
-            adv2 = optimizer.IWV(img_source,logo_path,seed,attack_type='MIFGSM')
+            adv2 = optimizer.IWV(img_source,logo_path,seed,attack_type=args.attack_type)
         else:
-            adv2, adv2_pred, adv2_mask = optimizer.IWV(img_source,logo_path,seed,attack_type='MIFGSM')
-        image_save(adv2, os.path.join(args.save_path, f'{args.model}', 'iwv', f'{t}-iwv.png'))
-
-
+            adv2, adv2_pred, adv2_mask = optimizer.IWV(img_source,logo_path,seed,attack_type=args.attack_type)
+        image_save(adv2, os.path.join(args.save_path, f'{args.model}', 'iwv', f'{args.attack_type}', f'{t}-iwv.png'))
 
 
 
@@ -104,8 +102,9 @@ if __name__ == '__main__':
     argparser.add_argument('--start_epsilon', type=int, help='the bound of random noise', default=8)
     argparser.add_argument('--step_alpha', type=int, help='step size', default=2)
     argparser.add_argument('--seed', type=int, help='random seed', default=160)
-    argparser.add_argument('--num_img', type=int, help='imgsz', default=5)
+    argparser.add_argument('--num_img', type=int, help='imgsz', default=10)
     argparser.add_argument('--attack_iter', type=int, default=50)
+    argparser.add_argument('--attack_type', type=str, help='Algorithm (Original, MIGFSM)', default='Original')
     argparser.add_argument('--save_path', type=str,default='./dataset/experiment/vaccine_wm')
 
     args = argparser.parse_args()

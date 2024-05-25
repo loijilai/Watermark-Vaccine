@@ -4,6 +4,7 @@ import numpy as np
 import math
 from torchvision import datasets, transforms
 import os
+import re
 from PIL import Image
 
 def clamp(X, lower_limit, upper_limit):
@@ -88,10 +89,29 @@ def image_save(inputs, save_path):
     """ save image as png """
     inputs = torch.squeeze(inputs)
     image_p = transforms.ToPILImage()(inputs.detach().cpu()).convert('RGB')
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path))
     image_p.save(save_path, format='PNG')
+
+def create_image_grid(pil_images, rows=3, cols=3, image_width=256, image_height=256):
+    grid_width = cols * image_width
+    grid_height = rows * image_height
+    grid_image = Image.new('RGB', (grid_width, grid_height))
+    
+    for idx, pil_image in enumerate(pil_images):
+        row = idx // cols
+        col = idx % cols
+        grid_image.paste(pil_image, (col * image_width, row * image_height))
+    
+    return grid_image
 
 def scale_pixels_01_to_neg11(inputs):
     return inputs*2 - 1
     
 def scale_pixels_neg11_to_01(inputs):
     return (inputs+1) / 2
+
+# Natural sort key function
+def natural_sort_key(s):
+    return [int(text) if text.isdigit() else text.lower()
+            for text in re.split('(\d+)', s)]
